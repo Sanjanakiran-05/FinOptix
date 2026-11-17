@@ -1,0 +1,35 @@
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Django database and user uploads
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# Logs
+*.log
+
+# IDE and system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Unnecessary installers
+get-pip.py
+python-3.10.11-amd64.exe
+
+# Local testing scripts
+add_user.py

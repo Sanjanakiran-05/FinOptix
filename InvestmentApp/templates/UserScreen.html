@@ -1,0 +1,315 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinOptix | Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #387ed1;
+            --buy: #4caf50;
+            --sell: #df514c;
+            --ink: #0a0a0f;
+            --ink-soft: #3d3d4a;
+            --ink-muted: #8888a0;
+            --surface: #ffffff;
+            --surface-2: #f8f9fa;
+            --border: rgba(10,10,15,0.06);
+            --transition: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            --accent-dim: rgba(56, 126, 209, 0.08);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background-color: #fcfcfd;
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ambient Noise Overlay */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.02;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ── NAVBAR ── */
+        .top-bar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 40px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .brand {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--ink);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+        .brand span { color: var(--primary); }
+
+        .nav-links { margin-left: auto; display: flex; gap: 24px; align-items: center; }
+        .nav-link-custom {
+            font-size: 13px; font-weight: 500; color: var(--ink-soft);
+            text-decoration: none; transition: 0.2s;
+        }
+        .nav-link-custom:hover { color: var(--primary); }
+
+        .btn-outline-pill {
+            font-size: 12px; font-weight: 600; color: var(--ink);
+            border: 1px solid var(--border); border-radius: 100px;
+            padding: 6px 16px; text-decoration: none; transition: 0.2s;
+        }
+        .btn-outline-pill:hover { background: var(--surface-2); }
+
+        .model-select {
+            font-size: 12px; border-radius: 100px; border: 1px solid var(--border);
+            padding: 5px 12px; background: white; outline: none;
+        }
+
+        .btn-solid-pill {
+            background: var(--ink); color: #fff; border: none;
+            padding: 6px 16px; border-radius: 100px; font-size: 12px;
+            font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .btn-solid-pill:hover { background: var(--primary); }
+
+        /* ── TICKER STRIP ── */
+        .ticker-ribbon {
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 40px;
+            display: flex; gap: 24px;
+            font-size: 12px; font-weight: 600;
+        }
+
+        /* ── DASHBOARD GRID ── */
+        .page-body { padding: 40px; position: relative; z-index: 1; }
+        
+        .g-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+
+        .ticker-label {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem; font-weight: 700;
+            color: var(--ink); letter-spacing: -0.02em;
+        }
+        
+        .badge-pill {
+            background: var(--accent-dim); color: var(--primary);
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            padding: 4px 12px; border-radius: 100px; letter-spacing: 0.05em;
+        }
+
+        .sec-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.9rem; font-weight: 700;
+            padding-bottom: 12px; border-bottom: 1px solid var(--border);
+            margin-bottom: 20px; color: var(--ink);
+        }
+
+        .stat-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-row span { color: var(--ink-muted); }
+        .stat-row strong { font-weight: 600; color: var(--ink); }
+
+        .empty-state { text-align: center; padding: 60px 0; color: var(--ink-muted); }
+        .empty-state i { font-size: 2.5rem; opacity: 0.3; display: block; margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+
+<nav class="top-bar">
+    <div class="container-fluid d-flex align-items-center">
+        <a class="brand" href="{% url 'dashboard' %}">Fin<span>Optix</span></a>
+        <div class="nav-links">
+            {% if not request.session.model_loaded %}
+            <form action="{% url 'LoadModel' %}" method="POST" class="d-flex gap-2 align-items-center">
+                {% csrf_token %}
+                <select name="model_name" class="model-select">
+                    <option value="gemini-3-flash">Gemini 3 Flash</option>
+                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                </select>
+                <button type="submit" class="btn-solid-pill">Load</button>
+            </form>
+            {% endif %}
+            <a href="{% url 'dashboard' %}" class="nav-link-custom">Dashboard</a>
+            <a href="{% url 'Suggestion' %}" class="nav-link-custom">Market Analysis</a>
+            <a href="{% url 'index' %}" class="btn-outline-pill">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="ticker-ribbon">
+    <span><span style="color:var(--ink-muted)">S&P 500</span> <span class="text-success">↑ 0.45%</span></span>
+    <span><span style="color:var(--ink-muted)">NASDAQ</span> <span class="text-danger">↓ 0.12%</span></span>
+    <span><span style="color:var(--ink-muted)">GOLD</span> <span class="text-success">↑ 1.10%</span></span>
+</div>
+
+<div class="container-fluid page-body">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="g-card mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex gap-2">
+                        <input type="text" id="live-ticker-input" class="form-control form-control-sm border-0 bg-light shadow-sm" style="width: 100px; font-weight: bold; text-transform:uppercase;" value="{{ ticker|default:'AAPL' }}" placeholder="Ticker">
+                        <select id="live-period-select" class="form-select form-select-sm border-0 bg-light shadow-sm" style="width: 100px; font-weight: 600;">
+                            <option value="1mo">1 Month</option>
+                            <option value="6mo">6 Months</option>
+                            <option value="1y" selected>1 Year</option>
+                            <option value="5y">5 Years</option>
+                        </select>
+                    </div>
+                    <span class="badge-pill" id="live-badge" style="transition: 0.3s;">⚡ Live Analytics</span>
+                </div>
+                
+                <div id="plotly-chart" style="min-height: 480px; width: 100%;"></div>
+            </div>
+
+            <div class="g-card">
+                <div class="sec-title">AI Analyst Insights</div>
+                {% if data %}
+                    <div style="font-size: 14px; line-height: 1.7; color: var(--ink-soft);">
+                        {{ data|safe }}
+                    </div>
+                {% else %}
+                    <p class="small text-muted">Select a ticker on the Suggestions page to generate an automated AI report.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="g-card">
+                <div class="sec-title">Market Depth</div>
+                <div class="stat-row"><span>Open Price</span> <strong id="stat-open">--</strong></div>
+                <div class="stat-row"><span>Day Session High</span> <strong id="stat-high" class="text-success">--</strong></div>
+                <div class="stat-row"><span>Day Session Low</span> <strong id="stat-low" class="text-danger">--</strong></div>
+                <div class="stat-row"><span>Trading Volume</span> <strong id="stat-volume">--</strong></div>
+            </div>
+            
+            <div id="error-toast" class="alert alert-danger mt-4" style="display: none; border-radius: 12px; font-size: 13px;">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> <span id="error-toast-msg"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let pollInterval;
+    const tickerInput = document.getElementById('live-ticker-input');
+    const periodSelect = document.getElementById('live-period-select');
+    const badge = document.getElementById('live-badge');
+    const errToast = document.getElementById('error-toast');
+    const errMsg = document.getElementById('error-toast-msg');
+
+    function fetchStockData() {
+        const ticker = tickerInput.value.toUpperCase();
+        const period = periodSelect.value;
+        
+        if (!ticker) return;
+        
+        badge.innerHTML = "⚡ Polling...";
+        badge.style.color = "var(--ink-muted)";
+        badge.style.background = "var(--surface-2)";
+        errToast.style.display = 'none';
+        
+        fetch(`/api/stock_data?ticker=${ticker}&period=${period}`)
+            .then(res => {
+                if (!res.ok) throw new Error("API Connection Failed");
+                return res.json();
+            })
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                
+                badge.innerHTML = "🟢 Live Analytics";
+                badge.style.color = "var(--buy)";
+                badge.style.background = "rgba(76, 175, 80, 0.1)";
+                
+                const trace1 = {
+                    x: data.dates,
+                    y: data.closes,
+                    mode: 'lines',
+                    name: 'Close Price',
+                    line: {color: '#4472c4', width: 1.5}
+                };
+                
+                const trace2 = {
+                    x: data.dates,
+                    y: data.smas,
+                    mode: 'lines',
+                    name: '20-Day SMA',
+                    line: {color: '#edbd44', width: 2.5}
+                };
+                
+                const layout = {
+                    template: 'plotly_white',
+                    hovermode: 'x unified',
+                    xaxis: {showgrid: true, gridcolor: '#f0f0f0'},
+                    yaxis: {showgrid: true, gridcolor: '#f0f0f0'},
+                    margin: {l: 50, r: 10, t: 30, b: 40},
+                    legend: {orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "right", x: 1}
+                };
+                
+                Plotly.react('plotly-chart', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
+                
+                document.getElementById('stat-open').innerText = "$" + data.stats.open;
+                document.getElementById('stat-high').innerText = "$" + data.stats.high;
+                document.getElementById('stat-low').innerText = "$" + data.stats.low;
+                document.getElementById('stat-volume').innerText = data.stats.volume;
+            })
+            .catch(err => {
+                console.error("Stock Fetch Error:", err);
+                badge.innerHTML = "🔴 Data Error";
+                badge.style.color = "var(--sell)";
+                badge.style.background = "rgba(223, 81, 76, 0.1)";
+                
+                errToast.style.display = 'block';
+                errMsg.innerText = err.message;
+            });
+    }
+
+    tickerInput.addEventListener('change', () => { fetchStockData(); resetPolling(); });
+    periodSelect.addEventListener('change', () => { fetchStockData(); resetPolling(); });
+
+    function resetPolling() {
+        if(pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(fetchStockData, 30000); 
+    }
+    
+    // Initial fetch on mount
+    fetchStockData();
+    resetPolling();
+</script>
+</body>
+</html>

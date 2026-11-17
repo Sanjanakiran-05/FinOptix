@@ -1,0 +1,117 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinOptix | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary: #387ed1;
+            --buy: #4caf50;
+            --sell: #df514c;
+            --ink: #0a0a0f;
+            --ink-soft: #3d3d4a;
+            --ink-muted: #8888a0;
+            --surface: #ffffff;
+            --border: rgba(10,10,15,0.06);
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #fcfcfd; min-height: 100vh; }
+        .top-bar {
+            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+            padding: 0 40px; height: 64px; display: flex; align-items: center; position: sticky; top: 0; z-index: 100;
+        }
+        .brand { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--ink); text-decoration: none; }
+        .brand span { color: var(--primary); }
+        .nav-links { margin-left: auto; display: flex; gap: 24px; align-items: center; }
+        .nav-item-link { font-size: 13px; font-weight: 500; color: var(--ink-soft); text-decoration: none; transition: 0.2s; }
+        .nav-item-link:hover, .nav-item-link.active { color: var(--primary); }
+        
+        .page-container { padding: 40px; max-width: 1000px; margin: 0 auto; }
+        .header-section { margin-bottom: 40px; }
+        .header-section h1 { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 700; color: var(--ink); }
+        .header-section p { color: var(--ink-muted); font-size: 14px; }
+        
+        .g-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); margin-bottom: 24px; }
+        
+        .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 20px;}
+        .stock-pill {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border);
+            font-weight: 600; font-size: 1.1rem; transition: 0.3s;
+        }
+        .stock-pill:hover { border-color: var(--primary); box-shadow: 0 8px 24px rgba(56, 126, 209, 0.08); transform: translateY(-2px);}
+        
+        .btn-custom { background: var(--ink); color: #fff; border: none; padding: 10px 24px; border-radius: 100px; font-size: 14px; font-weight: 600; transition: 0.3s; }
+        .btn-custom:hover { background: var(--primary); color: #fff;}
+        .form-control-custom { border-radius: 100px; border: 1px solid var(--border); padding: 10px 20px; font-size: 14px; box-shadow: none; outline: none; background: #f8f9fa;}
+        .form-control-custom:focus { border-color: var(--primary); outline: none; box-shadow: none;}
+    </style>
+</head>
+<body>
+<div class="top-bar">
+    <a href="{% url 'dashboard' %}" class="brand">Fin<span>Optix</span></a>
+    <nav class="nav-links">
+        <a href="{% url 'dashboard' %}" class="nav-item-link active">Dashboard</a>
+        <a href="{% url 'LoadModel' %}" class="nav-item-link">Models</a>
+        <a href="{% url 'Suggestion' %}" class="nav-item-link">Suggestions</a>
+        <a href="{% url 'index' %}" class="nav-item-link" style="color: var(--sell);">Logout</a>
+    </nav>
+</div>
+<div class="page-container">
+    <div class="header-section">
+        <h1>Welcome, {{ username }}!</h1>
+        <p>Manage your stock library and quick start your analysis.</p>
+    </div>
+    
+    <div class="g-card d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h5 style="font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 5px;">Add to Library</h5>
+            <p style="color: var(--ink-muted); font-size: 13px; margin: 0;">Save your favorite equity tickers for quick access.</p>
+        </div>
+        <form method="POST" action="{% url 'dashboard' %}" class="d-flex gap-2 w-100" style="max-width: 400px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add">
+            <input type="text" name="ticker" class="form-control form-control-custom" placeholder="e.g. AAPL, TSLA" required>
+            <button type="submit" class="btn-custom flex-shrink-0">Add Stock</button>
+        </form>
+    </div>
+
+    <div class="g-card">
+        <h5 style="font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 4px;">My Watchlist Library</h5>
+        {% if library_stocks %}
+            <p style="color: var(--ink-muted); font-size: 13px;">Your saved stocks.</p>
+            <div class="lib-grid">
+                {% for stock in library_stocks %}
+                <div class="stock-pill">
+                    <span style="font-family: 'Syne', sans-serif;">{{ stock }}</span>
+                    <div class="d-flex gap-2">
+                        <form method="POST" action="{% url 'SuggestionAction' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="t1" value="{{ stock }}">
+                            <button type="submit" class="btn btn-sm btn-light" style="border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;"><i class="bi bi-graph-up text-primary"></i></button>
+                        </form>
+                        <form method="POST" action="{% url 'dashboard' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="ticker" value="{{ stock }}">
+                            <button type="submit" class="btn btn-sm btn-light" style="border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;"><i class="bi bi-trash text-danger"></i></button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5" style="color: var(--ink-muted); font-size: 14px;">
+                <i class="bi bi-folder2-open d-block mb-3" style="font-size: 2rem; opacity: 0.5;"></i>
+                Your library is empty. Add a stock above.
+            </div>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

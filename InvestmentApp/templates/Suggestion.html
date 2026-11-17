@@ -1,0 +1,270 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinOptix | Market Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #387ed1;
+            --buy: #4caf50;
+            --sell: #df514c;
+            --ink: #0a0a0f;
+            --ink-soft: #3d3d4a;
+            --ink-muted: #8888a0;
+            --surface: #ffffff;
+            --surface-2: #f8f9fa;
+            --border: rgba(10,10,15,0.06);
+            --transition: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #fcfcfd;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.02;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .top-bar {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 40px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .top-bar .brand {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--ink);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+        .top-bar .brand span { color: var(--primary); }
+
+        .nav-links { margin-left: auto; display: flex; gap: 24px; align-items: center; }
+        .nav-item-link {
+            font-size: 13px; font-weight: 500; color: var(--ink-soft);
+            text-decoration: none; transition: 0.2s;
+        }
+        .nav-item-link:hover, .nav-item-link.active { color: var(--primary); }
+
+        .ticker-ribbon {
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 0;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .page-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
+            position: relative;
+        }
+
+        .analysis-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 440px;
+            padding: 48px 40px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.03);
+            animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-area { text-align: center; margin-bottom: 32px; }
+        .title-text {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }
+        .subtitle-text {
+            font-size: 0.875rem;
+            color: var(--ink-muted);
+            line-height: 1.6;
+        }
+
+        .form-label-custom {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--ink-soft);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .select-wrap { position: relative; }
+        .select-wrap i {
+            position: absolute; left: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--ink-muted); font-size: 1.1rem;
+            pointer-events: none; z-index: 1;
+        }
+        .form-select-custom {
+            width: 100%;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 14px 14px 44px;
+            font-size: 14px;
+            color: var(--ink);
+            transition: 0.2s;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238888a0' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+        }
+        .form-select-custom:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(56, 126, 209, 0.08);
+        }
+
+        .btn-analyze {
+            width: 100%;
+            background: var(--ink);
+            color: #fff;
+            border: none;
+            border-radius: 100px;
+            padding: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .btn-analyze:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(56, 126, 209, 0.2);
+        }
+
+        .alert-custom {
+            background: #f0fdf4;
+            color: var(--buy);
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 13px;
+            margin-bottom: 24px;
+            text-align: center;
+            border: 1px solid rgba(76, 175, 80, 0.1);
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 11px;
+            color: var(--ink-muted);
+            letter-spacing: 0.02em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <a href="{% url 'dashboard' %}" class="brand">Fin<span>Optix</span></a>
+    <nav class="nav-links">
+        <a href="{% url 'dashboard' %}" class="nav-item-link">Dashboard</a>
+        <a href="{% url 'Suggestion' %}" class="nav-item-link active">Suggestions</a>
+        <a href="{% url 'index' %}" class="nav-item-link" style="color: var(--sell);">Logout</a>
+    </nav>
+</div>
+
+<div class="ticker-ribbon">
+    <div class="container d-flex justify-content-center gap-4">
+        <span class="text-success">S&P 500 +0.45%</span>
+        <span class="text-danger">NASDAQ -0.12%</span>
+        <span class="text-success">DJIA +0.22%</span>
+    </div>
+</div>
+
+<div class="page-container">
+    <div class="analysis-card">
+        <div class="header-area">
+            <h1 class="title-text">Market Analysis</h1>
+            <p class="subtitle-text">Leverage Gemini AI to evaluate technical trends and strategic positioning.</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-custom">
+                    <i class="bi bi-cpu-fill me-2"></i> {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form name="f1" method="post" action="{% url 'SuggestionAction' %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="form-label-custom">Select Equity Ticker</label>
+                <div class="select-wrap">
+                    <i class="bi bi-search"></i>
+                    <select name="t1" class="form-select-custom" required>
+                        <option value="" selected disabled>Search or select stock...</option>
+                        <option value="AAPL">Apple Inc. (AAPL)</option>
+                        <option value="MSFT">Microsoft Corp. (MSFT)</option>
+                        <option value="AMZN">Amazon.com, Inc. (AMZN)</option>
+                        <option value="GOOGL">Alphabet Inc. (GOOGL)</option>
+                        <option value="TSLA">Tesla, Inc. (TSLA)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-analyze shadow-sm">
+                Generate Analyst Report <i class="bi bi-stars"></i>
+            </button>
+        </form>
+
+        <div class="footer-note">
+            <i class="bi bi-info-circle me-1"></i> 
+            Insights powered by Google Gemini. Market data via yfinance.
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
