@@ -13,4 +13,5 @@ urlpatterns = [path("index.html", views.index, name="index"),
 	       path("SuggestionAction", views.SuggestionAction, name="SuggestionAction"),	
 	       path("dashboard", views.Dashboard, name="dashboard"),
 	       path("api/stock_data", views.StockDataAPI, name="StockDataAPI"),
+           path("demo/", views.DemoDashboard, name="demo"),
 ]

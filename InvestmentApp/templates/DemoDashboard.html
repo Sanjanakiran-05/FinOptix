@@ -1,0 +1,377 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinOptix | Demo Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #387ed1;
+            --buy: #4caf50;
+            --sell: #df514c;
+            --ink: #0a0a0f;
+            --muted: #8888a0;
+            --surface: #ffffff;
+            --surface-2: #f8f9fa;
+            --border: rgba(10,10,15,0.07);
+            --radius: 14px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--surface);
+            color: var(--ink);
+            line-height: 1.5;
+        }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 5%;
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font: 800 1.5rem 'Syne', sans-serif;
+            color: var(--ink);
+            text-decoration: none;
+        }
+
+        .brand span { color: var(--primary); }
+
+        .demo-tag {
+            color: var(--primary);
+            background: rgba(56,126,209,.09);
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .06em;
+        }
+
+        .main {
+            max-width: 1150px;
+            margin: 55px auto;
+            padding: 0 25px;
+        }
+
+        .intro { margin-bottom: 35px; }
+
+        .intro h1 {
+            font: 800 clamp(2rem, 4vw, 3rem) 'Syne', sans-serif;
+            letter-spacing: -.04em;
+            margin: 18px 0 8px;
+        }
+
+        .intro p { color: var(--muted); font-size: 14px; }
+
+        .section-heading {
+            font: 700 1.15rem 'Syne', sans-serif;
+            margin-bottom: 5px;
+        }
+
+        .section-subtitle {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 22px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 25px;
+            transition: .3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 35px rgba(0,0,0,.045);
+            border-color: rgba(56,126,209,.25);
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+
+        .stat-value {
+            font: 700 1.8rem 'Syne', sans-serif;
+        }
+
+        .stat-icon {
+            color: var(--primary);
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 22px;
+            margin-bottom: 25px;
+        }
+
+        .stock-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 19px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stock-row:last-child { border-bottom: none; }
+
+        .stock-symbol {
+            font: 700 14px 'Syne', sans-serif;
+        }
+
+        .stock-company {
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 3px;
+        }
+
+        .stock-price {
+            font-weight: 600;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .stock-change {
+            font-size: 11px;
+            margin-top: 4px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .positive { color: var(--buy); }
+        .negative { color: var(--sell); }
+
+        .analysis-item {
+            padding: 17px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .analysis-item:last-child { border: none; }
+
+        .analysis-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .analysis-description {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .status {
+            display: inline-block;
+            background: #edf8f0;
+            color: #32934b;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .notice {
+            background: #f5f8fc;
+            border: 1px solid #e6edf6;
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            gap: 13px;
+            align-items: flex-start;
+            margin-top: 25px;
+        }
+
+        .notice i { color: var(--primary); font-size: 19px; }
+
+        .notice p {
+            color: #68758a;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        footer {
+            text-align: center;
+            padding: 35px 20px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 65px;
+        }
+
+        @media(max-width: 750px) {
+            .content-grid { grid-template-columns: 1fr; }
+            .main { margin-top: 35px; }
+        }
+
+        @media(prefers-reduced-motion: no-preference) {
+            .card {
+                animation: fadeUp .6s ease both;
+            }
+            @keyframes fadeUp {
+                from { opacity: 0; transform: translateY(14px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="nav-inner">
+        <a href="/" class="brand">Fin<span>Optix</span></a>
+        <span class="demo-tag">PORTFOLIO DEMO</span>
+    </div>
+</nav>
+
+<main class="main">
+
+    <section class="intro">
+        <span class="demo-tag">FINANCIAL OVERVIEW</span>
+        <h1>Market Dashboard</h1>
+        <p>Explore the sample dashboard and analytical features of FinOptix.</p>
+    </section>
+
+    <section class="stats-grid">
+        <div class="card">
+            <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="stat-label">Stocks Tracked</div>
+            <div class="stat-value">04</div>
+        </div>
+
+        <div class="card">
+            <div class="stat-icon"><i class="bi bi-cpu"></i></div>
+            <div class="stat-label">Analysis Engine</div>
+            <div class="stat-value">AI</div>
+        </div>
+
+        <div class="card">
+            <div class="stat-icon"><i class="bi bi-bar-chart-line"></i></div>
+            <div class="stat-label">Market Insights</div>
+            <div class="stat-value">Sample</div>
+        </div>
+
+        <div class="card">
+            <div class="stat-icon"><i class="bi bi-shield-check"></i></div>
+            <div class="stat-label">Dashboard Mode</div>
+            <div class="stat-value">Read-only</div>
+        </div>
+    </section>
+
+    <section class="content-grid">
+
+        <div class="card">
+            <h2 class="section-heading">Watchlist</h2>
+            <p class="section-subtitle">Illustrative stock market data</p>
+
+            {% for stock in demo_stocks %}
+            <div class="stock-row">
+                <div>
+                    <div class="stock-symbol">{{ stock.ticker }}</div>
+                    <div class="stock-company">{{ stock.company }}</div>
+                </div>
+
+                <div>
+                    <div class="stock-price">{{ stock.price }}</div>
+                    <div class="stock-change {% if '+' in stock.change %}positive{% else %}negative{% endif %}">
+                        {{ stock.change }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="card">
+            <h2 class="section-heading">Platform Insights</h2>
+            <p class="section-subtitle">Example analytical capabilities</p>
+
+            <div class="analysis-item">
+                <div class="analysis-title">
+                    <i class="bi bi-activity" style="color:#387ed1"></i>
+                    Technical Analysis
+                </div>
+                <p class="analysis-description">
+                    Examine stock trends using moving averages, momentum indicators and RSI.
+                </p>
+            </div>
+
+            <div class="analysis-item">
+                <div class="analysis-title">
+                    <i class="bi bi-cpu" style="color:#387ed1"></i>
+                    AI-Based Insights
+                </div>
+                <p class="analysis-description">
+                    Generate Buy, Sell or Hold recommendations using financial indicators and AI-generated analysis.
+                </p>
+            </div>
+
+            <div class="analysis-item">
+                <div class="analysis-title">
+                    <i class="bi bi-bar-chart" style="color:#387ed1"></i>
+                    Market Trends
+                </div>
+                <p class="analysis-description">
+                    Review stock performance and identify potential market trends.
+                </p>
+            </div>
+        </div>
+
+    </section>
+
+    <div class="notice">
+        <i class="bi bi-info-circle"></i>
+        <p>
+            <strong>About this demo:</strong>
+            This is a read-only portfolio demonstration.
+            Stock prices and percentage changes are fictional sample values,
+            not live market data. AI recommendations and external API calls
+            are disabled in this demonstration.
+        </p>
+    </div>
+
+</main>
+
+<footer>
+    <div class="brand">Fin<span>Optix</span></div>
+    <p style="margin-top:10px;">© 2026 FinOptix · AI-Powered Financial Advisory Platform</p>
+    <p style="margin-top:5px;">Portfolio demonstration only · Not financial advice</p>
+</footer>
+
+</body>
+</html>

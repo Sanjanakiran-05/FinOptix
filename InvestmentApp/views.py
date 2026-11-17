@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
+from .models import RegisteredUser, StockLibrary
 import os
 import pymysql
 import io
@@ -16,6 +17,7 @@ import yfinance as yf
 import pandas as pd
 from google import genai
 from groq import Groq
+
 
 # --- 1. Global Configuration ---
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -66,7 +68,7 @@ def get_investment_suggestion(technical_summary, model_to_use):
 
     try:
         completion = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-120b",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
             max_tokens=1024,
@@ -82,36 +84,39 @@ def UserLogin(request): return render(request, 'UserLogin.html', {})
 def Register(request): return render(request, 'Register.html', {})
 def Suggestion(request): return render(request, 'Suggestion.html', {})
 
+
 def Dashboard(request):
     username = request.session.get('username')
     if not username:
         return redirect('UserLogin')
-    
-    import sqlite3
-    from django.conf import settings
-    db_path = settings.DATABASES['default']['NAME']
-    con = sqlite3.connect(db_path)
-    
-    with con:
-        con.execute("CREATE TABLE IF NOT EXISTS library (id INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(30), ticker VARCHAR(10))")
-    
+
     if request.method == 'POST':
         ticker = request.POST.get('ticker', '').upper().strip()
         action = request.POST.get('action')
+
         if action == 'add' and ticker:
-            with con:
-                con.execute("INSERT INTO library (username, ticker) VALUES (?, ?)", (username, ticker))
+            StockLibrary.objects.get_or_create(
+                username=username,
+                ticker=ticker
+            )
         elif action == 'delete' and ticker:
-            with con:
-                con.execute("DELETE FROM library WHERE username=? AND ticker=?", (username, ticker))
+            StockLibrary.objects.filter(
+                username=username,
+                ticker=ticker
+            ).delete()
+
         return redirect('dashboard')
-        
-    with con:
-        cur = con.cursor()
-        cur.execute("SELECT ticker FROM library WHERE username=?", (username,))
-        library_stocks = [r[0] for r in cur.fetchall()]
-        
-    return render(request, 'Dashboard.html', {'library_stocks': library_stocks, 'username': username})
+
+    library_stocks = list(
+        StockLibrary.objects.filter(
+            username=username
+        ).values_list('ticker', flat=True)
+    )
+
+    return render(request, 'Dashboard.html', {
+        'library_stocks': library_stocks,
+        'username': username
+    })
 
 def LoadModel(request):
     if request.method == 'POST':
@@ -221,27 +226,21 @@ def UserLoginAction(request):
         u = request.POST.get('username')
         p = request.POST.get('password')
 
-        import sqlite3
-        from django.conf import settings
+        user = RegisteredUser.objects.filter(
+            username=u
+        ).first()
 
-        con = sqlite3.connect(settings.DATABASES['default']['NAME'])
-
-        with con:
-            cur = con.cursor()
-            cur.execute(
-                "SELECT username, password FROM register WHERE username=?",
-                (u,)
-            )
-            user = cur.fetchone()
-
-        if user and check_password(p, user[1]):
+        if user and check_password(p, user.password):
             request.session['model_loaded'] = False
             request.session['username'] = u
             return redirect('dashboard')
 
-        return render(request, 'UserLogin.html', {'data': 'Login failed'})
+        return render(request, 'UserLogin.html', {
+            'data': 'Login failed'
+        })
 
     return redirect('UserLogin')
+
 
 def RegisterAction(request):
     if request.method == 'POST':
@@ -249,30 +248,29 @@ def RegisterAction(request):
         p = request.POST.get('password')
         c = request.POST.get('contact')
         e = request.POST.get('email')
-        a = request.POST.get('address')
+        a = request.POST.get('address', '').strip()
 
-        import sqlite3
-        from django.conf import settings
-
-        con = sqlite3.connect(settings.DATABASES['default']['NAME'])
+        if RegisteredUser.objects.filter(username=u).exists():
+            return render(request, 'Register.html', {
+                'data': 'Username already exists'
+            })
 
         hashed_password = make_password(p)
 
-        with con:
-            cur = con.cursor()
-            cur.execute(
-                "INSERT INTO register VALUES(?,?,?,?,?)",
-                (u, hashed_password, c, e, a)
-            )
-            con.commit()
-
-        return render(
-            request,
-            'UserLogin.html',
-            {'data': "Registration successful. Please login."}
+        RegisteredUser.objects.create(
+            username=u,
+            password=hashed_password,
+            contact=c,
+            email=e,
+            address=a
         )
 
+        return render(request, 'UserLogin.html', {
+            'data': 'Registration successful. Please login.'
+        })
+
     return redirect('Register')
+
 
 def StockDataAPI(request):
     ticker = request.GET.get('ticker', 'AAPL').upper()
@@ -306,3 +304,17 @@ def StockDataAPI(request):
         'smas': smas,
         'stats': market_stats
     })
+
+
+def DemoDashboard(request):
+    demo_stocks = [
+        {'ticker': 'AAPL', 'company': 'Apple Inc.', 'price': '$273.50', 'change': '+1.25%'},
+        {'ticker': 'MSFT', 'company': 'Microsoft', 'price': '$505.20', 'change': '+0.82%'},
+        {'ticker': 'NVDA', 'company': 'NVIDIA', 'price': '$186.40', 'change': '+2.14%'},
+        {'ticker': 'GOOGL', 'company': 'Alphabet', 'price': '$295.10', 'change': '-0.35%'},
+    ]
+
+    return render(request, 'DemoDashboard.html', {
+        'demo_stocks': demo_stocks
+    })
+
